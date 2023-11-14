@@ -1,21 +1,30 @@
 import { Router } from "express";
 
+import { ClassroomService } from "../services/classroomService";
+
 const router = Router();
 
 router.get("/", (req, res) => {
-  // Logique pour lister les salles de classe
+    res.send(ClassroomService.findAll());
 });
 
 router.get("/:id", (req, res) => {
-  // Logique pour obtenir les détails d'une salle de classe
+    const classroom = ClassroomService.findById(req.params.id);
+    if (classroom) {
+        res.send(classroom);
+    } else {
+        res.sendStatus(404);
+    }
 });
 
 router.post("/", (req, res) => {
-  // Logique pour créer une nouvelle salle de classe
+    const classroom = ClassroomService.create(req.body.questions);
+    res.status(201).send(classroom);
 });
 
 router.delete("/:id", (req, res) => {
-  // Logique pour supprimer une salle de classe
+    ClassroomService.deleteById(req.params.id);
+    res.sendStatus(204);
 });
 
 export default router;
