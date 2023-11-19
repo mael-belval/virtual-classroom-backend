@@ -8,7 +8,6 @@ ENV NODE_ENV production
 # Install dependencies based on the preferred package manager
 COPY . .
 COPY .yarnrc.yml ./.yarnrc.yml
-COPY .yarn ./.yarn
 
 RUN yarn --frozen-lockfile
 ENV PORT 4000
