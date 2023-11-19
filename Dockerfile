@@ -5,11 +5,11 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
-RUN yarn set version stable
+RUN corepack install --global yarn@stable
 
 # Install dependencies based on the preferred package manager
 COPY . .
-COPY .yarnrc.yml ./.yarnrc.yml
+COPY .yarnrc.yml ./
 
 RUN yarn --frozen-lockfile
 ENV PORT 4000
@@ -18,7 +18,7 @@ RUN yarn build
 FROM --platform=linux/amd64 node:20-alpine as runner
 WORKDIR /app
 
-RUN yarn set version stable
+RUN corepack install --global yarn@stable
 
 COPY --from=builder /app/ ./
 COPY --from=builder /app/.yarn/releases ./.yarn/releases
