@@ -1,0 +1,42 @@
+name: "[PROD] Build backend"
+
+on:
+    release:
+        types: [published]
+    push:
+        branches:
+            - main
+            - develop
+            - hotfix/*
+            - ci/*
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        outputs:
+            version: ${{ steps.metadata.outputs.version }}
+        steps:
+            - uses: actions/checkout@v3
+            - uses: docker/login-action@v2
+              with:
+                  registry: ${{ vars.REGISTRY }}
+                  username: ${{ secrets.SCW_ACCESS_KEY }}
+                  password: ${{ secrets.SCW_SECRET_KEY }}
+            - uses: docker/metadata-action@v4
+              id: metadata
+              with:
+                  images: ${{ vars.REGISTRY }}/virtual-classroom-backend
+                  tags: |
+                      type=sha,prefix={{branch}}-
+            - name: Build and push Docker image
+              uses: docker/build-push-action@v4
+              with:
+                  context: .
+                  file: ./Dockerfile
+                  push: true
+                  tags: ${{ steps.metadata.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
