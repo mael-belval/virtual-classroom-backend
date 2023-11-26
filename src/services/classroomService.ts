@@ -1,5 +1,6 @@
-import { Classroom } from "../models/classroom";
+import { Classroom, createClassroomModel } from "../models/classroom";
 import { v4 as uuidv4 } from "uuid";
+import { SocketManager } from "./socketManager";
 
 let classrooms: Classroom[] = [];
 
@@ -12,16 +13,23 @@ export const ClassroomService = {
         return classrooms.find((c) => c.id === id);
     },
 
-    create: (questions: string[]): Classroom => {
+    create: (createClassroom: createClassroomModel): Classroom => {
         const newClassroom: Classroom = {
             id: uuidv4(),
-            questions,
+            title: createClassroom.title,
+            questions: createClassroom.questions,
+            sockets: [],
         };
         classrooms.push(newClassroom);
         return newClassroom;
     },
 
-    deleteById: (id: string): void => {
+    deleteById: (id: string): boolean => {
+        const originalLength = classrooms.length;
+
+        SocketManager.getIO().of(`/classrooms/${id}`).disconnectSockets(true);
+
         classrooms = classrooms.filter((c) => c.id !== id);
+        return classrooms.length !== originalLength;
     },
 };
