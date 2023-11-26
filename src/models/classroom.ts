@@ -9,7 +9,7 @@ export interface Classroom {
 }
 
 export const createClassroomSchema = z.object({
-    title: z.string(),
-    questions: z.array(z.string()),
+    title: z.string().min(1),
+    questions: z.array(z.string().min(1)).min(1),
 });
 export type createClassroomModel = z.infer<typeof createClassroomSchema>;
