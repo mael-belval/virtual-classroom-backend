@@ -22,6 +22,7 @@ export const StudentService = {
                     socket.disconnect();
                     return;
                 }
+                console.log("new connection");
 
                 socket.on("disconnect", () => {
                     console.log("disconnect", socket.data.email);
@@ -32,10 +33,10 @@ export const StudentService = {
                     }
                 });
 
-                socket.onAny((event, ...args) => {
-                    console.log(event, args);
-                    namespace.to("admin").emit(event, ...args);
-                });
+                // socket.onAny((event, ...args) => {
+                //     console.log(event, args);
+                //     namespace.to("admin").emit(event, ...args);
+                // });
 
                 socket.once("join", (data) => {
                     console.log("join handler", "join", data);
@@ -75,26 +76,26 @@ export const StudentService = {
                     }
                 });
 
-                socket.on("question", async (data, callback) => {
-                    if (!classroom.questions.includes(data)) return;
+                socket.on("question", async (data) => {
+                    const index = z.number().safeParse(data);
 
-                    socket.data.question = data;
+                    if (!index.success) return;
 
-                    const result = await namespace.in("student").fetchSockets();
+                    if (classroom.questions.length <= index.data) return;
 
-                    const state = result.map((s) => ({
+                    socket.data.currentQuestionIndex = index.data;
+
+                    const students = await namespace
+                        .in("student")
+                        .fetchSockets();
+
+                    const state = students.map((s) => ({
                         email: s.data.email,
-                        question: s.data.question,
+                        currentQuestionIndex: s.data.currentQuestionIndex,
                     }));
 
-                    console.log("question handler", "state", state);
+                    console.log("question handler", state);
                     namespace.to("admin").emit("state", state);
-
-                    callback({
-                        status: "ok",
-                    });
-
-                    return;
                 });
             });
     },
