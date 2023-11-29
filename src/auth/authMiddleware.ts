@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { env } from "../config/env";
 
 export const authMiddleware = (
     req: Request,
     res: Response,
     next: NextFunction
 ) => {
-    const githubSecret = process.env.JWT_SECRET;
+    const githubSecret = env.JWT_SECRET;
     if (!githubSecret) {
         throw new Error("JWT_SECRET is not defined");
     }

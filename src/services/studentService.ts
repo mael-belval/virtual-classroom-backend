@@ -1,6 +1,7 @@
 import { SocketManager } from "./socketManager";
 import { ClassroomService } from "./classroomService";
 import { z } from "zod";
+import { env } from "../config/env";
 
 export const StudentService = {
     init: () => {
@@ -44,7 +45,7 @@ export const StudentService = {
                         .string()
                         .regex(/^\w+\.\w+@etu\.utc\.fr$/)
                         .safeParse(data);
-                    if (data !== process.env.ADMIN_EMAIL && !email.success) {
+                    if (data !== env.ADMIN_EMAIL && !email.success) {
                         console.error("join handler", "email not valid", data);
                         socket.emit("ending misconfigurated connection");
                         socket.disconnect();
@@ -68,7 +69,7 @@ export const StudentService = {
                         socket.disconnect();
                         return;
                     } else {
-                        if (data === process.env.ADMIN_EMAIL) {
+                        if (data === env.ADMIN_EMAIL) {
                             socket.join("admin");
                         } else {
                             socket.join("student");
