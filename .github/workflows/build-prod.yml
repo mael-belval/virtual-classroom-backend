@@ -1,42 +1,67 @@
 name: "[PROD] Build backend"
 
 on:
-    release:
-        types: [published]
-    push:
-        branches:
-            - main
-            - develop
-            - hotfix/*
-            - ci/*
+  release:
+    types: [published]
+  push:
+    branches:
+      - main
+      - develop
+      - hotfix/*
+      - ci/*
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        outputs:
-            version: ${{ steps.metadata.outputs.version }}
-        steps:
-            - uses: actions/checkout@v3
-            - uses: docker/login-action@v2
-              with:
-                  registry: ${{ vars.REGISTRY }}
-                  username: ${{ secrets.SCW_ACCESS_KEY }}
-                  password: ${{ secrets.SCW_SECRET_KEY }}
-            - uses: docker/metadata-action@v4
-              id: metadata
-              with:
-                  images: ${{ vars.REGISTRY }}/virtual-classroom-backend
-                  tags: |
-                      type=sha,prefix={{branch}}-
-            - name: Build and push Docker image
-              uses: docker/build-push-action@v4
-              with:
-                  context: .
-                  file: ./Dockerfile
-                  push: true
-                  tags: ${{ steps.metadata.outputs.tags }}
-                  labels: ${{ steps.meta.outputs.labels }}
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/login-action@v2
+        with:
+          registry: ${{ vars.REGISTRY }}
+          username: ${{ secrets.SCW_ACCESS_KEY }}
+          password: ${{ secrets.SCW_SECRET_KEY }}
+      - uses: docker/metadata-action@v4
+        id: metadata
+        with:
+          images: ${{ vars.REGISTRY }}/virtual-classroom-backend
+          tags: |
+            type=sha,prefix={{branch}}-
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - name: Checkout helm charts
+        uses: actions/checkout@v3
+        with:
+          repository: mael-belval/yggdrasil
+          # We can't use ${{ github.token }} as it only has access to own repository
+          # INFRA_CI_TOKEN should contains a github PAT with only the required
+          # permissions
+          token: ${{ secrets.INFRA_CI_TOKEN }}
+          path: yggdrasil
+      - name: Retrive Kubernetes config
+        run: |
+          mkdir -p ~/.kube
+          echo "$KUBECONFIG_FILE" > ~/.kube/config
+          chmod 600 ~/.kube/config
+        env:
+          KUBECONFIG_FILE: "${{ secrets.KUBECONFIG_FILE }}"
+      - name: Install Helm
+        run: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - run: echo "Deploying ${{ needs.build.outputs.version }} version"
+      - name: Deploy
+        run: helm upgrade -n ${{ vars.K8S_NAMESPACE }} --reuse-values --set image.tag=${{ needs.build.outputs.version }} virtual-classroom-backend ./yggdrasil/distant/charts/virtual-classroom-backend
