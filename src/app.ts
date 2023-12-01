@@ -28,6 +28,7 @@ export const app = (app: Express) => {
             format: format.combine(format.json()),
             expressFormat: true,
             colorize: false,
+            ignoredRoutes: ["/"],
         })
     );
 
