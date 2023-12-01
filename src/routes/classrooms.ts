@@ -1,9 +1,9 @@
 import { Router } from "express";
+import { z } from "zod";
 
 import { ClassroomService } from "../services/classroomService";
 import { authMiddleware } from "../auth/authMiddleware";
-import { Classroom, createClassroomSchema } from "../models/classroom";
-import { z } from "zod";
+import { type Classroom, createClassroomSchema } from "../models/classroom";
 
 type ClassroomResponse = Omit<Classroom, "sockets">;
 
@@ -29,25 +29,23 @@ router.get("/:id", (req, res) => {
         res.status(400).send(id.error);
         return;
     }
+
     const classroom = ClassroomService.findById(id.data);
-    if (classroom) {
-        res.send(classroomToClassroomResponse(classroom));
-    } else {
+    if (!classroom) {
         res.sendStatus(404);
+        return;
     }
+    res.send(classroomToClassroomResponse(classroom));
 });
 
 router.post("/", authMiddleware, (req, res) => {
     const classroomQuestions = createClassroomSchema.safeParse(req.body);
-
     if (!classroomQuestions.success) {
-        console.error(classroomQuestions.error);
         res.status(400).send(classroomQuestions.error);
         return;
     }
 
     const classroom = ClassroomService.create(classroomQuestions.data);
-
     res.status(201).send(classroomToClassroomResponse(classroom));
 });
 
@@ -57,13 +55,14 @@ router.delete("/:id", authMiddleware, (req, res) => {
         res.status(400).send(id.error);
         return;
     }
-    const deletionSuccess = ClassroomService.deleteById(id.data);
 
+    const deletionSuccess = ClassroomService.deleteById(id.data);
     if (!deletionSuccess) {
         res.sendStatus(404);
         return;
     }
+
     res.sendStatus(204);
 });
 
-export default router;
+export { router };

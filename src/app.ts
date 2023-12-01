@@ -1,11 +1,11 @@
 import { json, type Express } from "express";
 import { createServer } from "http";
-import { SocketManager } from "./services/socketManager";
-import cors from "cors";
 import { transports, format } from "winston";
 import { logger } from "express-winston";
+import cors from "cors";
 
-import classroomRoutes from "./routes/classrooms";
+import { SocketManager } from "./services/socketManager";
+import { router } from "./routes/classrooms";
 import { env } from "./config/env";
 import { StudentService } from "./services/studentService";
 
@@ -31,7 +31,7 @@ export const app = (app: Express) => {
         })
     );
 
-    app.use("/api/v1/classrooms", classroomRoutes);
+    app.use("/api/v1/classrooms", router);
 
     app.use("/", (_, res) => {
         res.send("OK");

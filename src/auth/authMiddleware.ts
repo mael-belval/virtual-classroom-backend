@@ -1,5 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import type { Request, Response, NextFunction } from "express";
+import { verify } from "jsonwebtoken";
+
 import { env } from "../config/env";
 
 export const authMiddleware = (
@@ -18,7 +19,7 @@ export const authMiddleware = (
             return res.status(401).json({ message: "Auth token is missing" });
         }
 
-        const decodedToken = jwt.verify(token, githubSecret);
+        const decodedToken = verify(token, githubSecret);
         req.user = decodedToken; // Ajoutez les informations décodées à l'objet requête
         next();
     } catch (error) {

@@ -6,6 +6,9 @@ const envSchema = z.object({
     JWT_SECRET: z.string(),
     FRONTEND_URL: z.string().url(),
     ADMIN_EMAIL: z.string().email(),
+    LOG_LEVEL: z
+        .enum(["error", "warn", "info", "http", "verbose", "debug", "silly"])
+        .default("info"),
 });
 
 export type Env = z.infer<typeof envSchema>;
