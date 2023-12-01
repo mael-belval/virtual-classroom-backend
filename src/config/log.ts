@@ -5,5 +5,5 @@ import { env } from "./env";
 export const logger = createLogger({
     level: env.LOG_LEVEL,
     transports: [new transports.Console()],
-    format: format.json(),
+    format: format.combine(format.timestamp(), format.json()),
 });
