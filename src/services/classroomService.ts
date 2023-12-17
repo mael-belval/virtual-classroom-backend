@@ -99,7 +99,7 @@ export const ClassroomService = {
         async (data: number) => {
             logger.info("question handler", { data });
 
-            const index = z.number().positive().safeParse(data);
+            const index = z.number().nonnegative().safeParse(data);
 
             if (!index.success) return;
             if (classroom.questions.length <= index.data) return;

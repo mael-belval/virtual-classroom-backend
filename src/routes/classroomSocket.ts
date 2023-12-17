@@ -27,6 +27,8 @@ export const onClassroomConnection = (socket: Socket): void => {
         }));
 
         namespace.to("admin").emit("state", state);
+
+        logger.debug("state", { state });
     };
 
     socket.on(
